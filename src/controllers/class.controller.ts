@@ -50,5 +50,5 @@ export async function addStudent(req: Request, res: Response) {
     const isTeacherOwned = haveClass.teacherId.equals(user._id);
     if (!isTeacherOwned) throw new errHandler(403, "Forbidden, You must own this class");
 
-    const data = haveClass.studentIds.push(studentId as Types.ObjectId);
+    // const data = haveClass.studentIds.push(studentId as Types.ObjectId);
 }

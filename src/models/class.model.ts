@@ -4,7 +4,8 @@ import type { Class } from "../types/common.type.js";
 const classSchema = new Schema<Class>({
     className: {
         type: "string",
-        required: true
+        required: true,
+        unique: true
     },
     teacherId: {
         type: Schema.Types.ObjectId,

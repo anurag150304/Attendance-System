@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import type { JWTPayload, User } from "../types/common.type.js";
+import type { JWTPayload } from "../types/common.type.js";
 
 export const hashPassword = async (password: string) => await bcrypt.hash(password, 10);
 export const comparePassword = async (password: string, hashedPassword: string) => await bcrypt.compare(password, hashedPassword);

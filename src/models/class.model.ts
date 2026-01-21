@@ -11,10 +11,12 @@ const classSchema = new Schema<Class>({
         type: Schema.Types.ObjectId,
         ref: "User"
     },
-    studentIds: {
-        type: [Schema.Types.ObjectId],
-        ref: "User"
-    }
+    studentIds: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ]
 });
 
 const classModel = model("Class", classSchema);

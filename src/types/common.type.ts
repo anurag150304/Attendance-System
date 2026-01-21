@@ -1,4 +1,4 @@
-import type { Document, Types } from "mongoose";
+import type { Document, Types, HydratedDocument } from "mongoose";
 import type { Request } from "express";
 
 export interface User extends Document {
@@ -17,7 +17,7 @@ export interface Attendance extends Document {
 export interface Class extends Document {
     className: "string";
     teacherId: Types.ObjectId,
-    studentIds: [Types.ObjectId]
+    studentIds: Types.ObjectId[]
 }
 
 export interface IRequest extends Request {
@@ -32,4 +32,11 @@ export interface IRequest extends Request {
 export interface JWTPayload {
     userId: string;
     role: "teacher" | "student";
+}
+
+
+export interface ActiveSessionType {
+    classId: string;
+    startedAt: string;
+    attendance: Record<string, "present" | "absent">
 }

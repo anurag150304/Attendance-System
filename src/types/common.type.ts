@@ -1,5 +1,6 @@
-import type { Document, Types, HydratedDocument } from "mongoose";
+import type { Document, Types } from "mongoose";
 import type { Request } from "express";
+import { WebSocket } from "ws";
 
 export interface User extends Document {
     name: string;
@@ -39,4 +40,8 @@ export interface ActiveSessionType {
     classId: string;
     startedAt: string;
     attendance: Record<string, "present" | "absent">
+}
+
+export interface IWebSocket extends WebSocket {
+    user: JWTPayload
 }

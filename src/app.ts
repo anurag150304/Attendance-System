@@ -16,7 +16,7 @@ import classDB from "./models/class.model.js";
 const App: Express = e();
 await connectDB();
 
-let activeSession: ActiveSessionType | null = null;
+export let activeSession: ActiveSessionType | null = null;
 
 App.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }));
 App.use(morgan("dev"));
@@ -57,8 +57,22 @@ App.post("/attendance/start", asyncWrap(authUser), asyncWrap(async (req: Request
 
     const isTeacherOwned = haveClass.teacherId.equals(user._id);
     if (!isTeacherOwned) throw new errHandler(403, "Forbidden, You must own this class");
+    if (activeSession) throw new errHandler(403, "There is an active session already running");
 
-    // if (activeSession)
+    const ISODate = new Date().toISOString();
+    activeSession = {
+        classId: haveClass.id,
+        startedAt: ISODate,
+        attendance: {}
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: {
+            classId: haveClass.id,
+            startedAt: ISODate
+        }
+    });
 }));
 
 App.all("*", (_: Request, res: Response) => {

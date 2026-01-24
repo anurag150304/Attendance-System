@@ -12,22 +12,25 @@ import { isValidObjectId } from "mongoose";
 import { attendanceSchema } from "./schema/class.schema.js";
 import userDB from "./models/user.model.js";
 import classDB from "./models/class.model.js";
-
-const App: Express = e();
-await connectDB();
+import cookieParser from "cookie-parser";
 
 export let activeSession: ActiveSessionType | null = null;
+export const resetSession = () => activeSession = null;
+await connectDB();
 
-App.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }));
+const App: Express = e();
+App.use(cors());
 App.use(morgan("dev"));
+App.use(cookieParser());
 App.use(e.json());
+App.use(e.urlencoded({ extended: true }));
 
 App.get("/", (_: Request, res: Response) => {
     res.status(200).json({ success: true, data: { message: "Welcome to Attendance System API..!" } });
 });
 
-App.use("/api/v1/auth", userRoutes);
-App.use("api/v1/class", classRoutes);
+App.use("/auth", userRoutes);
+App.use("/class", classRoutes);
 
 App.get("/students", asyncWrap(authUser), asyncWrap(async (req: Request, res: Response) => {
     const { _id, role } = (req as IRequest).user;
@@ -74,10 +77,6 @@ App.post("/attendance/start", asyncWrap(authUser), asyncWrap(async (req: Request
         }
     });
 }));
-
-App.all("*", (_: Request, res: Response) => {
-    return res.status(404).json({ success: false, error: "Page Not Found!" });
-});
 
 App.use((err: unknown, _: Request, res: Response, next: NextFunction) => {
     if (res.headersSent) return next(err);

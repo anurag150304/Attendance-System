@@ -9,4 +9,4 @@ router.post("/signup", asyncWrap(signupUser));
 router.post("/login", asyncWrap(signinUser));
 router.get("/logout", asyncWrap(authUser), asyncWrap(signoutUser));
 router.get("/me", asyncWrap(authUser), asyncWrap(profile));
-export default Router;
+export default router;

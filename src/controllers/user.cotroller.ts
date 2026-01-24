@@ -12,7 +12,7 @@ export async function signupUser(req: Request, res: Response) {
     const { name, email, password, role } = parsedData.data;
 
     const existingUser = await userDB.findOne({ email });
-    if (existingUser) throw new errHandler(400, "User already exists!");
+    if (existingUser) throw new errHandler(400, "Email already exists");
 
     const hashedPassword = await hashPassword(password);
     if (!hashPassword) throw new errHandler(500, "Something went wrong while comparing passwords!");
@@ -39,26 +39,27 @@ export async function signinUser(req: Request, res: Response) {
     const { email, password } = parsedData.data;
 
     const existingUser = await userDB.findOne({ email }).select("+password");
-    if (!existingUser) throw new errHandler(404, "User not found!");
+    if (!existingUser) throw new errHandler(400, "Invalid email or password");
 
     const isPassMatched = await comparePassword(password, existingUser.password);
-    if (!isPassMatched) throw new errHandler(400, "Invalid Credentials");
+    if (!isPassMatched) throw new errHandler(400, "Invalid email or password");
 
     let token: string | null = null;
     try {
         token = generateToken({ userId: existingUser.id, role: existingUser.role });
         if (!token) throw new errHandler(400, "Something went wrong! Try again.");
     } catch (err) {
+        console.error("Error generating token:", err);
         throw new errHandler(500, "Failed to generate token!")
     }
 
-    res.cookie("auth_token", token);
-    return res.status(200).json({ status: true, data: { token } });
+    res.cookie("auth_token", token, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.status(200).json({ success: true, data: { token } });
 }
 
 export async function signoutUser(_: Request, res: Response) {
     res.clearCookie("auth_token");
-    return res.status(200).json({ status: false, message: "User logged out successfully" });
+    return res.status(200).json({ success: false, message: "User logged out successfully" });
 }
 
 export async function profile(req: Request, res: Response) {

@@ -27,6 +27,7 @@ export interface IRequest extends Request {
         name: string;
         email: string;
         role: "teacher" | "student";
+        token: string;
     }
 }
 
@@ -39,7 +40,7 @@ export interface JWTPayload {
 export interface ActiveSessionType {
     classId: string;
     startedAt: string;
-    attendance: Record<string, "present" | "absent">
+    attendance: Record<string, "present" | "absent" | "not yet updated">
 }
 
 export interface IWebSocket extends WebSocket {

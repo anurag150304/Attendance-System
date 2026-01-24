@@ -12,7 +12,7 @@ const attendanceSchema = new Schema<Attendance>({
     },
     status: {
         type: "string",
-        enum: ["present", "absent"],
+        enum: ["present", "absent", "not yet updated"],
         required: true
     }
 });

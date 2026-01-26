@@ -5,7 +5,7 @@ import { verifyToken } from "../utils/common.util.js";
 import userDB from "../models/user.model.js";
 
 export async function authUser(req: Request, _: Response, next: NextFunction) {
-    const token: string = req.cookies?.auth_token || req.headers.authorization;
+    const token: string = req.headers.authorization as string;
     if (!token) throw new errHandler(401, "Unauthorized, token missing or invalid");
 
     let decodedData: JWTPayload | null = null;

@@ -35,7 +35,7 @@ App.use("/class", classRoutes);
 App.get("/students", asyncWrap(authUser), asyncWrap(async (req: Request, res: Response) => {
     const { _id, role } = (req as IRequest).user;
     if (!isValidObjectId(_id)) throw new errHandler(401, "Invalid class Id");
-    if (role !== "teacher") throw new errHandler(403, "Forbidden, Teacher access required");
+    if (role !== "teacher") throw new errHandler(403, "Forbidden, teacher access required");
 
     const students = await userDB.find({ role: "student" });
 
@@ -47,19 +47,19 @@ App.get("/students", asyncWrap(authUser), asyncWrap(async (req: Request, res: Re
 
 App.post("/attendance/start", asyncWrap(authUser), asyncWrap(async (req: Request, res: Response) => {
     const user = (req as IRequest).user;
-    if (user.role !== "teacher") throw new errHandler(403, "Forbidden, Teacher access required");
+    if (user.role !== "teacher") throw new errHandler(403, "Forbidden, teacher access required");
 
     const parsedData = attendanceSchema.safeParse(req.body);
-    if (!parsedData.success) throw new errHandler(401, "Invalid request schema");
+    if (!parsedData.success) throw new errHandler(400, "Invalid request schema");
 
     const classId = parsedData.data.classId;
-    if (!isValidObjectId(classId)) throw new errHandler(401, "Invalid class Id");
+    if (!isValidObjectId(classId)) throw new errHandler(400, "Invalid class Id");
 
     const haveClass = await classDB.findById(classId);
-    if (!haveClass) throw new errHandler(404, "Class not found!");
+    if (!haveClass) throw new errHandler(404, "Class not found");
 
     const isTeacherOwned = haveClass.teacherId.equals(user._id);
-    if (!isTeacherOwned) throw new errHandler(403, "Forbidden, You must own this class");
+    if (!isTeacherOwned) throw new errHandler(403, "Forbidden, not class teacher");
     if (activeSession) throw new errHandler(403, "There is an active session already running");
 
     const ISODate = new Date().toISOString();

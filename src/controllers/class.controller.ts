@@ -5,16 +5,14 @@ import classDB from "../models/class.model.js";
 import type { IRequest, User } from "../types/common.type.js";
 import { isValidObjectId, Types } from "mongoose";
 import attendanceDB from "../models/attendance.model.js";
+import userDB from "../models/user.model.js";
 
-export async function createTeacherClass(req: Request, res: Response) {
+export async function getTeacherClass(req: Request, res: Response) {
     const user = (req as IRequest).user;
     if (user.role !== "teacher") throw new errHandler(403, "Forbidden, teacher access required");
 
     const parsedData = getClassSchema.safeParse(req.body);
     if (!parsedData.success) throw new errHandler(400, "Invalid request schema");
-
-    const haveClass = await classDB.findOne({ className: parsedData.data.className });
-    if (haveClass) throw new errHandler(409, "Class already exists");
 
     const newClass = await classDB.create({
         className: parsedData.data.className,
@@ -36,50 +34,45 @@ export async function createTeacherClass(req: Request, res: Response) {
 
 export async function addStudent(req: Request, res: Response) {
     const classId = req.params.id;
-    console.log("Class ID:", classId);
     if (!classId) throw new errHandler(400, "Class Id is required!");
     if (!isValidObjectId(classId)) throw new errHandler(401, "Invalid class Id");
 
     const user = (req as IRequest).user;
-    if (user.role !== "teacher") throw new errHandler(403, "Forbidden, Teacher access required");
+    if (user.role !== "teacher") throw new errHandler(403, "Forbidden, teacher access required");
 
     const parsedData = addStudentSchema.safeParse(req.body);
-    console.log("Parsed Data:", parsedData);
     if (!parsedData.success) throw new errHandler(400, "Invalid request schema");
 
     const { studentId } = parsedData.data;
     if (!isValidObjectId(studentId)) throw new errHandler(401, "Invalid student Id");
 
-    const haveClass = await classDB.findOne({ className: classId });
-    console.log("Have Class:", haveClass);
-    if (!haveClass) throw new errHandler(404, "Class not found!");
+    const existingUser = await userDB.findById(studentId);
+    if (!existingUser) throw new errHandler(404, "Student not found");
+
+    const haveClass = await classDB.findById(classId);
+    if (!haveClass) throw new errHandler(404, "Class not found");
 
     const isTeacherOwned = haveClass.teacherId.equals(user._id);
-    console.log("Is Teacher Owned:", isTeacherOwned);
-    if (!isTeacherOwned) throw new errHandler(403, "Forbidden, You must own this class");
-    let result;
-    try {
-        haveClass.studentIds.push(new Types.ObjectId(studentId));
-        result = await haveClass.save();
-        if (!result) throw new errHandler(500, "Something went wrong while class allotment!");
-    } catch (err) {
-        throw new errHandler(500, (err as errHandler).message)
-    }
+    if (!isTeacherOwned) throw new errHandler(403, "Forbidden, not class teacher");
 
-    console.log({
-        _id: result.id,
-        className: result.className.toString(),
-        teacherId: result.teacherId.toString(),
-        studentIds: result.studentIds.map(st => st.toString())
-    })
+    let result;
+    if (!haveClass.studentIds.map(val => val.toString()).includes(studentId)) {
+        try {
+            haveClass.studentIds.push(new Types.ObjectId(studentId));
+            result = await haveClass.save();
+            if (!result) throw new Error("Something went wrong while class allotment!");
+        } catch (err) {
+            throw new errHandler(500, (err as errHandler).message)
+        }
+    }
 
     return res.status(200).json({
         success: true,
         data: {
-            _id: result.id,
-            className: result.className.toString(),
-            teacherId: result.teacherId.toString(),
-            studentIds: result.studentIds.map(st => st.toString())
+            _id: result!.id,
+            className: result!.className.toString(),
+            teacherId: result!.teacherId.toString(),
+            studentIds: result!.studentIds.map(st => st.toString())
         }
     })
 }
@@ -90,7 +83,7 @@ export async function getClassInfo(req: Request, res: Response) {
     if (!isValidObjectId(classId)) throw new errHandler(401, "Invalid class Id");
 
     const classInfo = await classDB.findById(classId).populate<{ studentIds: User[] }>("studentIds");
-    if (!classInfo) throw new errHandler(404, "Class not found!");
+    if (!classInfo) throw new errHandler(404, "Class not found");
 
     const { _id, role } = (req as IRequest).user;
     let isValidUser: boolean | null = null;
@@ -105,7 +98,7 @@ export async function getClassInfo(req: Request, res: Response) {
         default: throw new errHandler(401, "Invalid role!");
     }
     if (!isValidUser)
-        throw new errHandler(403, role === "teacher" ? "You must own this class" : "You must be enrolled in this class");
+        throw new errHandler(403, role === "teacher" ? "Forbidden, not class teacher" : "Forbidden, must be enrolled in the class");
 
     return res.status(200).json({
         success: true,

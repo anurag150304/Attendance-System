@@ -9,7 +9,6 @@ import { Types } from "mongoose";
 
 let io: SocketServer | null = null;
 const clients: WebSocket[] = [];
-const ID = () => Math.floor(Math.random() * 10_000);
 
 export async function initializeSocketServer(server: Server) {
     io = new WebSocketServer({ server, path: "/ws" });
@@ -50,8 +49,6 @@ export async function initializeSocketServer(server: Server) {
 
         if (!clients.includes(webSocket)) clients.push(webSocket);
 
-        console.log(`Socket ID connected ${ID()}`);
-
         webSocket.on("message", async (payload: WebSocket.RawData) => {
             if (!payload.toLocaleString().includes("{")) {
                 webSocket.send(JSON.stringify({
@@ -60,7 +57,6 @@ export async function initializeSocketServer(server: Server) {
                 }));
                 return;
             }
-            console.log(payload.toLocaleString());
             const { event, data } = JSON.parse(payload.toLocaleString());
             if (!event) throw new Error("Event is required!");
             if (!data) throw new Error("Payload data is required!");
@@ -334,5 +330,6 @@ export async function initializeSocketServer(server: Server) {
         const webSocket = socket as IWebSocket;
         const idx = clients.indexOf(webSocket);
         if (idx) clients.splice(idx, 1);
+        socket.close();
     });
 }
